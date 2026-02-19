@@ -42,6 +42,27 @@ var UnixUtils = require("qbs.UnixUtils");
 var Utilities = require("qbs.Utilities");
 var WindowsUtils = require("qbs.WindowsUtils");
 
+function getLinkerTypeRecursively(product, isDep)
+{
+    if (isDep) {
+        if (!product.type || !product.artifacts || !product.type.includes("staticlibrary"))
+            return undefined;
+        if (product.artifacts.cpp_staticlibrary)
+            return "cpp";
+    }
+    var linkerType = undefined;
+    for (var i = 0; i < (product.dependencies || []).length; ++i) {
+        var depType = getLinkerTypeRecursively(product.dependencies[i], true);
+        if (depType === "cpp")
+            return "cpp";
+        if (depType === "c")
+            linkerType = "c";
+    }
+    if (!linkerType && product.artifacts.c_staticlibrary)
+        return "c";
+    return linkerType;
+}
+
 function effectiveLinkerPath(product, inputs) {
     if (product.cpp.linkerMode === "automatic") {
         var compilers = product.cpp.compilerPathByLanguage;
@@ -51,6 +72,10 @@ function effectiveLinkerPath(product, inputs) {
                             + product.name);
                 return compilers["cpp"];
             }
+
+            var linkerTypeFromDeps = getLinkerTypeRecursively(product, false);
+            if (linkerTypeFromDeps)
+                return compilers[linkerTypeFromDeps];
 
             if (inputs.c_obj || inputs.c_staticlibrary) {
                 console.log("Found C or Objective-C objects, choosing C linker for "
@@ -741,9 +766,17 @@ function standardFallbackValueOrDefault(toolchain, compilerVersion, languageVers
         "c++23": {
             "fallback": "c++2b",
             "toolchains": [
-                {"name": "xcode"},
-                {"name": "clang"},
-                {"name": "gcc"}
+                {"name": "xcode", "version": "15.0"},
+                {"name": "clang", "version": "13.0"},
+                {"name": "gcc", "version": "11.1"}
+            ]
+        },
+        "c++26": {
+            "fallback": "c++2c",
+            "toolchains": [
+                {"name": "xcode", "version": "17.0"},
+                {"name": "clang", "version": "19.0"},
+                {"name": "gcc", "version": "15.1"}
             ]
         }
     };
@@ -882,9 +915,13 @@ function compilerFlags(project, product, outputs, input, output, explicitlyDepen
     if (!pchOutput && pchInputs && pchInputs.length === 1
             && ModUtils.moduleProperty(input, 'usePrecompiledHeader', tag)) {
         var pchInput = pchInputs[0];
-        var pchFilePath = FileInfo.joinPaths(FileInfo.path(pchInput.filePath),
-                                             pchInput.completeBaseName);
-        args.push(input.cpp.preincludeFlag, pchFilePath);
+        if (input.qbs.toolchain.includes("clang")) {
+            args.push("-include-pch", pchInput.filePath);
+        } else {
+            var pchFilePath = FileInfo.joinPaths(FileInfo.path(pchInput.filePath),
+                                                 pchInput.completeBaseName);
+            args.push(input.cpp.preincludeFlag, pchFilePath);
+        }
     }
 
     args = args.concat(Cpp.collectPreincludePathsArguments(input));
@@ -920,7 +957,8 @@ function compilerFlags(project, product, outputs, input, output, explicitlyDepen
         case "cpp":
         case "cppm":
         case "objcpp":
-            knownValues = ["c++23", "c++2b", "c++20", "c++2a", "c++17", "c++1z",
+            knownValues = ["c++26", "c++2c", "c++23", "c++2b",
+                           "c++20", "c++2a", "c++17", "c++1z",
                            "c++14", "c++1y", "c++11", "c++0x",
                            "c++03", "c++98"];
             return Cpp.languageVersion(input.cpp.cxxLanguageVersion, knownValues, "C++");

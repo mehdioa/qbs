@@ -6009,6 +6009,16 @@ void TestBlackbox::linkerVariant()
         QVERIFY2(!m_qbsStdout.contains("-fuse-ld"), m_qbsStdout.constData());
 }
 
+void TestBlackbox::linkerTypeRecursive()
+{
+    QDir::setCurrent(testDataDir + "/linker-type-recursive");
+    QCOMPARE(runQbs(), 0);
+    if (m_qbsStdout.contains("no host target"))
+        QSKIP("The rest of the test only applies to host targets");
+    QCOMPARE(runQbs(QbsRunParameters("run")), 0);
+    QVERIFY2(m_qbsStdout.contains("Hi!"), m_qbsStdout.constData());
+}
+
 void TestBlackbox::lexyacc()
 {
     if (!lexYaccExist())
@@ -7075,6 +7085,12 @@ void TestBlackbox::qbsConfig()
     QCOMPARE(runQbs(params), 0);
     params.arguments = settingsDirArgs + QStringList{"--user", "key.subkey.scalar", "u"};
     QCOMPARE(runQbs(params), 0);
+    params.arguments = settingsDirArgs + QStringList{"--user", "key.subkey.bool", "true"};
+    QCOMPARE(runQbs(params), 0);
+    params.arguments = settingsDirArgs + QStringList{"--user", "key.subkey.uint", "42"};
+    QCOMPARE(runQbs(params), 0);
+    params.arguments = settingsDirArgs + QStringList{"--user", "key.subkey.sint", "-42"};
+    QCOMPARE(runQbs(params), 0);
     params.arguments = settingsDirArgs + QStringList{"key.subkey.list", "[\"u1\",\"u2\"]"};
     QCOMPARE(runQbs(params), 0);
 
@@ -7089,6 +7105,15 @@ void TestBlackbox::qbsConfig()
     params.arguments = settingsDirArgs + QStringList{"--list", "--user", "key.subkey.scalar"};
     QCOMPARE(runQbs(params), 0);
     QCOMPARE(valueExtractor(), QByteArray("\"u\""));
+    params.arguments = settingsDirArgs + QStringList{"--list", "--user", "key.subkey.bool"};
+    QCOMPARE(runQbs(params), 0);
+    QCOMPARE(valueExtractor(), QByteArray("true"));
+    params.arguments = settingsDirArgs + QStringList{"--list", "--user", "key.subkey.uint"};
+    QCOMPARE(runQbs(params), 0);
+    QCOMPARE(valueExtractor(), QByteArray("42"));
+    params.arguments = settingsDirArgs + QStringList{"--list", "--user", "key.subkey.sint"};
+    QCOMPARE(runQbs(params), 0);
+    QCOMPARE(valueExtractor(), QByteArray("-42"));
     params.arguments = settingsDirArgs + QStringList{"--list", "--system", "key.subkey.scalar"};
     QCOMPARE(runQbs(params), 0);
     QCOMPARE(valueExtractor(), QByteArray("\"s\""));
@@ -9353,8 +9378,10 @@ void TestBlackbox::maximumCxxLanguageVersion()
     QCOMPARE(runQbs(QbsRunParameters("resolve",
                                      QStringList("products.app.enableNewestModule:true"))), 0);
     QCOMPARE(runQbs(QStringList({"--command-echo-mode", "command-line", "-n"})), 0);
-    QVERIFY2(m_qbsStdout.contains("c++23") || m_qbsStdout.contains("c++2b")
-             || m_qbsStdout.contains("c++latest"), m_qbsStdout.constData());
+    QVERIFY2(
+        m_qbsStdout.contains("c++26") || m_qbsStdout.contains("c++2c")
+            || m_qbsStdout.contains("c++latest"),
+        m_qbsStdout.constData());
     QCOMPARE(runQbs(QbsRunParameters("resolve",
                                      QStringList("products.app.enableNewestModule:false"))), 0);
     QCOMPARE(runQbs(QStringList({"--command-echo-mode", "command-line", "-n"})), 0);

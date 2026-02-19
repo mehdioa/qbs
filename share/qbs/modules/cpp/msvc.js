@@ -121,7 +121,7 @@ function supportsExternalIncludesOption(input) {
 
 function addCxxLanguageVersionFlag(input, args) {
     var cxxVersion = Cpp.languageVersion(input.cpp.cxxLanguageVersion,
-            ["c++23", "c++20", "c++17", "c++14", "c++11", "c++98"], "C++");
+            ["c++26", "c++23", "c++20", "c++17", "c++14", "c++11", "c++98"], "C++");
     if (!cxxVersion)
         return;
 
@@ -327,11 +327,9 @@ function prepareCompilerInternal(project, product, inputs, outputs, input, outpu
             // clang-cl complains when pch file is not included
             args.push("/FI" + FileInfo.toWindowsSeparators(input.filePath));
             args.push("/Fp" + FileInfo.toWindowsSeparators(pchOutput.filePath));
-            args.push("/Fo" + FileInfo.toWindowsSeparators(objOutput.filePath));
         } else { // real msvc
             args.push("/Yc");
             args.push("/Fp" + FileInfo.toWindowsSeparators(pchOutput.filePath));
-            args.push("/Fo" + FileInfo.toWindowsSeparators(objOutput.filePath));
             args.push(FileInfo.toWindowsSeparators(input.filePath));
         }
 

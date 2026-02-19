@@ -139,6 +139,8 @@ private slots:
     void moduleWithProductDependency();
     void modules_data();
     void modules();
+    void multipleModuleBackendsViaOwnProperty_data();
+    void multipleModuleBackendsViaOwnProperty();
     void multiplexedExports();
     void multiplexingByProfile();
     void multiplexingByProfile_data();
@@ -147,6 +149,7 @@ private slots:
     void nonRequiredProducts();
     void nonRequiredProducts_data();
     void outerInGroup();
+    void overrideProductPropFromSubProjectItem();
     void overriddenPropertiesAndPrototypes();
     void overriddenPropertiesAndPrototypes_data();
     void overriddenVariantProperty();
