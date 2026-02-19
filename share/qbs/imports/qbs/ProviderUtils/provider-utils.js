@@ -40,15 +40,19 @@ function isMsvcQt(qtProps) {
 }
 
 function isMinGwQt(qtProps) {
-    return qtProps.mkspecName.startsWith("win32-g++") || qtProps.mkspecName.startsWith("mingw");
+    return qtProps.mkspecName.startsWith("win32-g++") || qtProps.mkspecName.contains("mingw") || qtProps.mkspecName.contains("win32-clang-g++");
+}
+
+function isClangQt(qtProps) {
+    return qtProps.mkspecName.contains("clang");
 }
 
 function isDesktopWindowsQt(qtProps) {
-    return qtProps.mkspecName.startsWith("win32-") || isMinGwQt(qtProps);
+    return qtProps.mkspecName.startsWith("win32-") || isMinGwQt(qtProps) || isClangQt(qtProp);
 }
 
 function qtNeedsDSuffix(qtProps) {
-    return !isMinGwQt(qtProps)
+    return !(isMinGwQt(qtProps) || isClangQt(qtProps))
             || Utilities.versionCompare(qtProps.qtVersion, "5.14.0") < 0
             || qtProps.configItems.contains("debug_and_release");
 }

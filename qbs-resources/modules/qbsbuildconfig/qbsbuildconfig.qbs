@@ -50,7 +50,7 @@ Module {
 
     Properties {
         condition: project.withCode && qbs.toolchain.contains("gcc")
-        property bool isClang: qbs.toolchain.contains("clang")
+        property bool isClang: qbs.toolchain.contains("clang") || qbs.toolchain.contains("llvm")
         property bool isMingw: qbs.toolchain.contains("mingw")
         property var versionAtLeast: { return function(v) { return Utilities.versionCompare(cpp.compilerVersion, v) >= 0 } }
         property var versionBelow: { return function(v) { return Utilities.versionCompare(cpp.compilerVersion, v) < 0 } }

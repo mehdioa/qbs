@@ -210,11 +210,11 @@ function guessMinimumWindowsVersion(qtProps) {
 
 function fillEntryPointLibs(qtProps, debug) {
     result = [];
-    var isMinGW = ProviderUtils.isMinGwQt(qtProps);
+    var isMsvc = ProviderUtils.isMsvcQt(qtProps);
 
     // Some Linux distributions rename the qtmain library.
     var qtMainCandidates = ["qtmain"];
-    if (isMinGW && qtProps.qtMajorVersion === 5)
+    if ((!isMsvc) && qtProps.qtMajorVersion === 5)
         qtMainCandidates.push("qt5main");
     if (qtProps.qtMajorVersion === 6)
         qtMainCandidates.push("Qt6EntryPoint");
@@ -222,12 +222,12 @@ function fillEntryPointLibs(qtProps, debug) {
     for (var i = 0; i < qtMainCandidates.length; ++i) {
         var baseNameCandidate = qtMainCandidates[i];
         var qtmain = qtProps.libraryPath + '/';
-        if (isMinGW)
+        if (!isMsvc)
             qtmain += "lib";
         qtmain += baseNameCandidate + qtProps.qtLibInfix;
         if (debug && ProviderUtils.qtNeedsDSuffix(qtProps))
             qtmain += 'd';
-        if (isMinGW) {
+        if (!isMsvc) {
             qtmain += ".a";
         } else {
             qtmain += ".lib";
